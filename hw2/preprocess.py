@@ -1,3 +1,5 @@
+# Python2
+
 import os
 import numpy as np
 from svmutil import *
@@ -11,6 +13,7 @@ data = np.array(tmp)[0,:,::-1]
 
 nTrain = 3000     
 nTest = 1601
+nFeat = 57
 
 def data_array_to_file(arr,filename):
 	n, m = arr.shape
@@ -30,10 +33,14 @@ data_array_to_file(data[-nTest:,:],'data.test')
 os.system('./svm-scale -s data.train.range data.train > data.train.scale')
 os.system('./svm-scale -r data.train.range data.test > data.test.scale')
 
+
 # get the scaled data as array
 
-def data_array_to_file(filename):
+def data_file_to_array(filename):
 	arr = []
+	data_len = []
+	ll = []
+	i = 0
 	with open(filename, 'r') as _file:
 		for line in _file:
 			tmp = line.strip().split()
@@ -41,9 +48,10 @@ def data_array_to_file(filename):
 			for val in tmp[1:]:
 				row.append(np.float(val.split(':')[1]))
 			arr.append(row)
-	return np.array(arr)
+			data_len.append(len(row))
+	return np.asarray(arr)
 	
-dtrs = data_array_to_file('data.train.scale')
+dtrs = data_file_to_array('data.train.scale')
 
 # compute a random split of the training data
 
@@ -52,12 +60,6 @@ nTrainBatch = np.int(nTrain / nBatch)
 tmp = np.arange(nTrain)
 np.random.shuffle(tmp)
 ind = [list(tmp[i*nTrainBatch:(i+1)*nTrainBatch]) for i in range(nBatch)]
+#drtsBatch = np.zeros((,nBatch))
 
-# some parameters
 
-degs = [1,2,3,4]
-K = 5
-range_C = [2**(i-K) for i in range(2*K+1)]
-
-for d in degs:
-	x = 0
