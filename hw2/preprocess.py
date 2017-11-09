@@ -22,7 +22,8 @@ def data_array_to_file(arr,filename):
 		for i in range(n):
 			_file.write(str(arr[i,0]))
 			for j in range(1,m):
-				_file.write(' '+str(j)+':'+str(arr[i,j]))
+				if arr[i,j] != 0:
+					_file.write(' '+str(j)+':'+str(arr[i,j]))
 			_file.write('\n')
 				
 data_array_to_file(data[:nTrain,:],'data.train')
@@ -53,13 +54,4 @@ def data_file_to_array(filename):
 	
 dtrs = data_file_to_array('data.train.scale')
 
-# compute a random split of the training data
-
-nBatch = 10
-nTrainBatch = np.int(nTrain / nBatch)
-tmp = np.arange(nTrain)
-np.random.shuffle(tmp)
-ind = [list(tmp[i*nTrainBatch:(i+1)*nTrainBatch]) for i in range(nBatch)]
-#drtsBatch = np.zeros((,nBatch))
-
-
+print dtrs.shape

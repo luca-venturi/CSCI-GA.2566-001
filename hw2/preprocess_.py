@@ -33,26 +33,43 @@ xTestScaled = scaler.transform(xTest)
 # compute a random split of the training data
 
 nBatch = 10
-nTrainBatch = np.int(nTrain / nBatch)
+nTestBatch = np.int(nTrain / nBatch)
+nTrainBatch = nTestBatch * (nBatch - 1)
 tmp = np.arange(nTrain)
 np.random.shuffle(tmp)
-index = [list(tmp[i*nTrainBatch:(i+1)*nTrainBatch]) for i in range(nBatch)]
+index = [list(tmp[i*nTestBatch:(i+1)*nTestBatch]) for i in range(nBatch)]
 
-dTrain = np.zeros((nBatch,nTrainBatch,nFeat))
-lTrain = np.zeros((nBatch,nTrainBatch))
+dTrainCV = []
+dTestCV = np.zeros((nBatch,nTestBatch,nFeat))
+lTrainCV = []
+lTestCV = np.zeros((nBatch,nTestBatch))
 for i in range(nBatch):
-	for j in range(nTrainBatch):
-		dTrain[i,j,:] = xTrainScaled[index[i][j],:]
-		lTrain[i,j] = yTrain[index[i][j]]
+	# test batches
+	for j in range(nTestBatch):
+		dTestCV[i,j,:] = xTrainScaled[index[i][j],:]
+		lTestCV[i,j] = yTrain[index[i][j]]
+	# train batches
+	d_tmp = []
+	l_tmp = []
+	for j in range(nTrain):
+		if j not in index[i]:
+			d_tmp.append(xTrain[j,:])
+			l_tmp.append(yTrain[j])
+	dTrainCV.append(d_tmp[:nTrainBatch])
+	lTrainCV.append(l_tmp[:nTrainBatch])
+dTrainCV = np.array(dTrainCV)
+lTrainCV = np.array(lTrainCV)
 	
-print(dTrain.shape)
-print(lTrain.shape)
+print(dTrainCV.shape)
+print(lTrainCV.shape)
+print(dTestCV.shape)
+print(lTestCV.shape)
 
 # find (C,d)
 
-k = 5
-deg = [4]#,2,3,4]
-C_range = [2**i for i in range(2*k +1)] #**(i-k)
+k = 7
+deg = [1]#,2,3,4]
+C_range = [2**7]#2**i for i in range(2*k +1)]
 
 cvScore = {}
 for C in C_range:
@@ -60,26 +77,22 @@ for C in C_range:
 		score = []
 		for i in range(nBatch):
 			svm = sklearn.svm.SVC(C=C, kernel='poly', degree=d)
-			svm.fit(dTrain[i,:,:],lTrain[i,:])
-			x_tmp = []
-			y_tmp = []
-			for j in range(nTrain):
-				if j not in index[i]:
-					x_tmp.append(xTrainScaled[j,:])
-					y_tmp.append(yTrain[j])
-			x_tmp = np.array(x_tmp)
-			y_tmp = np.array(y_tmp)
-			score.append(1.-svm.score(x_tmp,y_tmp))
+			svm.fit(dTrainCV[i,:,:],lTrainCV[i,:])
+			score.append(1.-svm.score(dTestCV[i,:,:],lTestCV[i,:]))
 		score = np.array(score)
 		cvScore[(d,C,'mean')] = np.mean(score)
 		cvScore[(d,C,'std')] = np.std(score)
 		print('C = ',C,' d = ',d,' -> Done')
-		
+
+colors = {1:'r',2:'b',3:'g',4:'k'}
 for d in deg:
 	tmp = np.array([cvScore[(d,C,'mean')] for C in C_range])
 	tmp2 = np.array([cvScore[(d,C,'std')] for C in C_range])
 	tmp_0 = np.log2(np.array(C_range))
-	plt.plot(tmp_0, tmp, 'b')
-	plt.plot(tmp_0, tmp + tmp2, 'g')
-	plt.plot(tmp_0, tmp - tmp2, 'g')
-	plt.show()
+	plt.plot(tmp_0, tmp, colors[d], label='d = ' + str(d))
+	print(tmp)
+	print(tmp2)
+	plt.plot(tmp_0, tmp + tmp2, colors[d]+'--')
+	plt.plot(tmp_0, tmp - tmp2, colors[d]+'--')	
+plt.legend()
+plt.show()
