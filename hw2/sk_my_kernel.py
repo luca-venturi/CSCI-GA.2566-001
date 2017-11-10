@@ -4,7 +4,6 @@ import numpy as np
 import pickle
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
-import matplotlib.pyplot as plt
 
 # load data
 
