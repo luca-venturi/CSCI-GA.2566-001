@@ -27,8 +27,9 @@ print('Gram matrix computed')
 
 # run cross validation
 
-K = 7
-C_range = [2**(i-K) for i in range(2*K +1)] # change? too slow
+K = 15
+# C_range = [2**(i-K) for i in range(2*K +1)] # change? too slow
+C_range = [2**(i+1) for i in range(K)]
 nBatch = 10
 
 scores = {}
@@ -44,7 +45,7 @@ print(errors)
 best_C = C_range[np.argmin(errors)]
 print(best_C)
 
-print('Cross validation error: ', errors[best_C])
+print('Cross validation error: ', 1.-scores[best_C])
 
 # test error
 
