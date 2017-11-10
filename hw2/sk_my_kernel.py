@@ -6,6 +6,8 @@ from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
 
 # load data
+# does not work with (-1.,1.) scaling. works with (-0.1,0.1) scaling, needs larger C though
+# --> re-preprocess
 
 with open ('data/data_python', 'rb') as _file:
     [xTrain,yTrain,xTest,yTest] = pickle.load(_file)
@@ -28,7 +30,6 @@ print('Gram matrix computed')
 # run cross validation
 
 K = 15
-# C_range = [2**(i-K) for i in range(2*K +1)] # change? too slow
 C_range = [2**(i+1) for i in range(K)]
 nBatch = 10
 
@@ -41,9 +42,8 @@ for C in C_range:
 # find best C
 
 errors = np.array([(1.-scores[C]) for C in C_range])
-print(errors)
 best_C = C_range[np.argmin(errors)]
-print(best_C)
+print('C* = ',best_C)
 
 print('Cross validation error: ', 1.-scores[best_C])
 
@@ -51,5 +51,4 @@ print('Cross validation error: ', 1.-scores[best_C])
 
 svm = SVC(C=best_C, kernel='precomputed')
 svm.fit(gTrain,yTrain)
-print('Test error: ', 1. - svm.score(xTest,yTest))
-
+print('Test error: ', 1. - svm.score(my_kernel(xTest,xTrain),yTest))

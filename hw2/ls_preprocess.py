@@ -1,19 +1,18 @@
-# Python2
+# use Python2
 
 import os
 import numpy as np
 
-# write the data from 'spam' into libsvm data files
+# write the data from 'spam' into libsvm-type data files
 
 tmp = []
-with open('data/spam_2016', 'r') as data_file:
+with open('data/spam', 'r') as data_file: # spam_2016 
     tmp.append([line.strip().split(",") for line in data_file])
 data = np.array(tmp)[0,:,:].astype(np.float)
 print data.shape
 
-nTrain = 3450#3000     
-nTest = 1151#1601
-nFeat = 57
+nTrain = 3000 # spam_2016 -> 3450     
+nTest = 1601 # spam_2016 -> 1151
 
 def data_array_to_file(arr,filename):
 	n, m = arr.shape
@@ -34,12 +33,9 @@ data_array_to_file(data[-nTest:,:],'data/test')
 os.system('python checkdata.py data/test')
 
 # scale the data
+# [-1.,1.] found to be the best choice, according to https://cs.nyu.edu/~mohri/ml16/sol2.pdf
 
-os.system('./svm-scale -l -1 -u 1 -s data/train_range data/train > data/train_scaled')
+os.system('libsvm/./svm-scale -l -1 -u 1 -s data/train_range data/train > data/train_scaled')
 os.system('python checkdata.py data/train_scaled')
-os.system('./svm-scale -l -1 -u 1 -r data/train_range data/test > data/test_scaled')
+os.system('libsvm/./svm-scale -l -1 -u 1 -r data/train_range data/test > data/test_scaled')
 os.system('python checkdata.py data/test_scaled')
-
-# train
-
-os.system('./svm-train -t 1 -d 4 -c 512 -h 0 -v 10 data/train_scaled')
