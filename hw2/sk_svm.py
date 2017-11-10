@@ -114,6 +114,7 @@ def my_kernel(x,y):
 	for i in range(n+3):
 		g += v[i] * (p ** (i+2))
 	return g
+Gram = my_kernel(xTrain,xTrain)
 
 # run cross validation
 
@@ -123,58 +124,48 @@ C_range = [2**(i-K) for i in range(2*K +1)]
 nBatch = 10
 
 scores = {}
-for d in degree_range:
-	for C in C_range:
-		svm = SVC(C=C, kernel=my_kernel, degree = d)
-		tmp = cross_val_score(svm,xTrain,yTrain,cv = nBatch)
-		scores[d,C,'mean'] = tmp.mean()
-		scores[d,C,'std'] = tmp.std()
-		print('d = ',d,' C = ',C,' -> ',scores[d,C,'mean'])
+for C in C_range:
+	svm = SVC(C=C, kernel='precomputed')
+	tmp = cross_val_score(svm,Gram,yTrain,cv = nBatch)
+	scores[C,'mean'] = tmp.mean()
+	scores[C,'std'] = tmp.std()
+	print(' C = ',C,' -> ',scores[C,'mean'])
 		
 # plot CV errors
 
 colors = {1:'r',2:'b',3:'g',4:'k'}
-errors = np.array([[(1.-scores[d,C,'mean']) for C in C_range] for d in degree_range])
-std = np.array([[scores[d,C,'std'] for C in C_range] for d in degree_range])
+errors = np.array([(1.-scores[C,'mean']) for C in C_range])
+std = np.array([scores[C,'std'] for C in C_range])
 print(errors)
 
 log2_C_range = np.log2(np.array(C_range))
-for i in range(len(degree_range)):
-	plt.plot(log2_C_range,errors[i,:],colors[degree_range[i]], label='d = ' + str(degree_range[i]))
+plt.plot(log2_C_range,errors,'r-', label='d = ' + str(degree_range[i]))
 	#plt.plot(log2_C_range,errors[i,:] + std[i,:],colors[degree_range[i]]+'--')
 	#plt.plot(log2_C_range,errors[i,:] - std[i,:],colors[degree_range[i]]+'--')
 	#plt.errorbar(log2_C_range, errors[i,:], xerr = None, yerr=std[i,:], colors[degree_range[i]], label='d = ' + str(degree_range[i]))
 plt.legend()
 plt.show()
 
-# find best (d,C)
+# find best C
 
-best_index = np.unravel_index(np.argmin(errors), errors.shape)
-best_d = degree_range[best_index[0]]
-best_C = C_range[best_index[1]]
-print(d,C)
+best_index = np.argmin(errors)
+best_C = C_range[best_index]
+print(C)
 
-# plot CV errors
+# print CV errors
 
 scores = {}
-for d in degree_range:
-	svm = SVC(C=best_C, kernel=my_kernel, degree = d)
-	tmp = cross_val_score(svm,xTrain,yTrain,cv = nBatch)
-	scores[d,'cv'] = tmp.mean()
-	print('d = ',d,' C = ',best_C,' -> ',scores[d,'cv'])
+svm = SVC(C=best_C, kernel='precomputed')
+tmp = cross_val_score(svm,Gram,yTrain,cv = nBatch)
+scores['best_C','cv'] = tmp.mean()
+print(' C = ',best_C,' -> ',scores['best_C','cv'])
 	
-errors_cv = np.array([(1.-scores[d,'cv']) for d in degree_range])
-plt.plot(degree_range,errors_cv,'b')
+print(1.-scores['best_C','cv'])
 
-# plot test errors
+# print test errors
 
-for d in degree_range:
-	svm = SVC(C=best_C, kernel=my_kernel, degree = d)
-	svm.fit(xTrain,yTrain)
-	scores[d,'n_support'] = sum(svm.n_support_)
-	scores[d,'test'] = svm.score(xTest,yTest)
-	print('d = ',d,' C = ',best_C,' -> ',scores[d,'test'])
+svm = SVC(C=best_C, kernel='precomputed')
+svm.fit(Gram,yTrain)
+scores['best_C','test'] = svm.score(xTest,yTest)
 	
-errors_test = np.array([(1.-scores[d,'test']) for d in degree_range])
-plt.plot(degree_range,errors_test,'y')
-plt.show()
+print(1.-scores['best_C','test'])
