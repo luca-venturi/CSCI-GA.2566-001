@@ -1,0 +1,24 @@
+........*
+optimization finished, #iter = 8561
+nu = 0.236568
+obj = -167997.456510, rho = -4.545654
+nSV = 740, nBSV = 688
+Total nSV = 740
+......*
+optimization finished, #iter = 6120
+nu = 0.217079
+obj = -153120.835111, rho = 2.279971
+nSV = 680, nBSV = 620
+Total nSV = 680
+.......*
+optimization finished, #iter = 7809
+nu = 0.206050
+obj = -144010.745246, rho = 2.268524
+nSV = 657, nBSV = 584
+Total nSV = 657
+.......*
+optimization finished, #iter = 7790
+nu = 0.197726
+obj = -136994.666356, rho = 2.049810
+nSV = 630, nBSV = 559
+Total nSV = 630
