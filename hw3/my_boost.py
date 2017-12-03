@@ -17,7 +17,8 @@ baseStump = DecisionTreeClassifier(max_depth=1, min_samples_leaf=1)
 baseStump.fit(xTrain, yTrain)
 
 tRange = [100,200,500,1000]
-rhoRange = [2**(-i-1) for i in range(10)]
+kRange = range(10)
+rhoRange = [2**(-i-1) for i in kRange]
 
 score = {}
 for T in tRange:
@@ -31,3 +32,9 @@ for T in tRange:
 		print( 'rho = ', rho, ' T = ', T, ' -> ', score[rho,T])
 best_rho, best_T = min(score, key=score.get)
 print(best_rho, best_T)
+
+# save results
+
+_list = [score, rhoRange, tRange, best_rho, best_T]
+with open('data/cv_data', 'wb') as _file:
+    pickle.dump(_list, _file)

@@ -29,19 +29,23 @@ for T in tRange:
 		algorithm="SAMME",
 		rho=rho)
 	_myBoost.fit(xTrain,yTrain)
-	score['m',T] = 1. - _myBoost.score(xTest,yTest)
-	print('modified AdaBoost [T = '+str(T)+'] -> ', score['m',T])
+	tmp = cross_val_score(_myBoost, xTrain, yTrain, cv=10)
+	score['m',T] = 1. - tmp.mean()
+	score['m',T,'std'] = 1. - tmp.std()
+	print('modified AdaBoost -> ', score['m',T], ' +- ', score['m',T,'std'])
 	# classic boost
 	_skBoost = myBoost(base_estimator=baseStump,
 		learning_rate=1.,
 		n_estimators=T,
 		algorithm="SAMME")
 	_skBoost.fit(xTrain,yTrain)
-	score['c',T] = 1. - _skBoost.score(xTest,yTest)
-	print('classic AdaBoost [T = '+str(T)+'] -> ', score['c',T])
+	tmp = cross_val_score(_skBoost, xTrain, yTrain, cv=10)
+	score['c',T] = 1. - tmp.mean()
+	score['c',T,'std'] = 1. - tmp.std()
+	print('classic AdaBoost -> ', score['c',T], ' +- ', score['c',T,'std'])
 	
 # save results
 
 _list = [score,]
-with open('data/test_data', 'wb') as _file:
+with open('data/cv_comp_data', 'wb') as _file:
     pickle.dump(_list, _file)

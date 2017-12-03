@@ -22,11 +22,15 @@ xTest = data[-nTest:,:-1]
 yTest = data[-nTest:,-1].astype(np.int)
 
 # scale data
-
+'''
 maxRange = 1.0 # 0.1 for my_kernel to work in reasonable time
 scaler = pr.MinMaxScaler(feature_range=(-maxRange, maxRange)) # found to be the best choice, according to https://cs.nyu.edu/~mohri/ml16/sol2.pdf
 xTrain = scaler.fit_transform(xTrain)
 xTest = scaler.transform(xTest)
+'''
+
+yTrain = 2 * yTrain - 1
+yTest = 2 * yTest - 1
 
 # save data to file 
 

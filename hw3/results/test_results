@@ -1,0 +1,8 @@
+modified AdaBoost [T = 100] ->  0.0624609618988
+classic AdaBoost [T = 100] ->  0.0630855715178
+modified AdaBoost [T = 200] ->  0.0580886945659
+classic AdaBoost [T = 200] ->  0.053091817614
+modified AdaBoost [T = 500] ->  0.053091817614
+classic AdaBoost [T = 500] ->  0.0499687695191
+modified AdaBoost [T = 1000] ->  0.054965646471
+classic AdaBoost [T = 1000] ->  0.053716427233

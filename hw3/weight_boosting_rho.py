@@ -104,7 +104,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  learning_rate=1.,
                  algorithm='SAMME.R',
                  random_state=None,
-                 rho=0.): # _mod_
+                 rho=None): # _mod_
 
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
@@ -113,8 +113,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             random_state=random_state)
 
         self.algorithm = algorithm
-        # self.rho = rho # _mod_
-        self._correction_ = np.log((1.- rho) / (1. + rho)) ## _mod_
+        self.rho = rho # _mod_
+        if self.rho == None:
+        	self._correction_ = 0.
+        else:
+        	self._correction_ = np.log((1.- self.rho) / (1. + self.rho)) ## _mod_
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier from the training set (X, y).
@@ -580,3 +583,18 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         return np.log(self.predict_proba(X))
+    
+    # _added_
+    
+    def margin(self, X, y):
+    	
+    	score = y * self.decision_function(X)
+    	
+    	N = 1000
+    	theta = np.linspace(0, 1, N, endpoint=True)
+    	margin = np.empty((N))
+    	for i in range(N):
+    		margin[i] = sum(score <= theta[i]) 
+    	margin /= score.size
+    	
+    	return np.array([theta,margin])
