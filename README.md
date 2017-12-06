@@ -1,3 +1,3 @@
-# ML17
+# FML17
 
 http://www.cs.nyu.edu/~mohri/ml17/
