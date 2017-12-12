@@ -41,7 +41,7 @@ def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, 
             eta *= 0.8
             it_old = it
     mu = mu_prime
-    print 'L = ', L, 'lam = ', lam 
+    print 'L = ', L, 'lam = ', lam
     print 'iter = ', it
     base_kernels = get_base_kernels(x, subsampling=1)
     return mu, sum_weight_kernels(base_kernels, mu) ** degree

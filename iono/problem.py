@@ -5,7 +5,7 @@ from sklearn.svm import SVC
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 import pgd_l2
 import pgd_new
@@ -56,6 +56,31 @@ class Problem():
         self.mu, self.gTrain = self.get_kernel(self.xTrain, self.yTrain, lam=self.best_lam, L=self.best_L)
         self.model = self.classifier.fit(gTrain, self.yTrain)
         print 'cv -> ', problem.cv_error_best
+
+    def my_cv(self):
+        kf = KFold(n_splits=10, shuffle = False)
+        x = self.x
+        y = self.y
+        score = {}		
+        for lam in self.lam_range:
+            for L in self.L_range:
+                tmp_score = []
+                for train_index, test_index in kf.split(x):
+                    xTrain, xTest = x[train_index], x[test_index]
+                    yTrain, yTest = y[train_index], y[test_index]
+                    mu, gTrain = self.get_kernel(xTrain, yTrain, lam=lam, L=L)
+                    tmp = self.make_test_kernels(xTrain, xTest, subsampling=self.subsampling)
+                    gTest = self.sum_weight_kernels(tmp, mu) ** self.degree
+                    classifier = self.get_classifier(c=lam)
+                    tmp_score.append(classifier.score(gTest,yTest)) #
+                score[lam,L] = np.array(tmp_score).mean()
+        self.best_lam, self.best_L = max(score, key=score.get)
+        self.cv_score = score
+
+	def test(self):
+		x = self.x
+		y = self.y
+		
     
     def predict(self):
         tmp = self.make_test_kernels(self.xTrain, self.xTest, subsampling=self.subsampling)
@@ -117,9 +142,9 @@ if __name__ == '__main__':
     alg = 'pgd' 
     degree = 1
     k = 3
-    lam_range = [0.01]#[2**(i-k) for i in range(2*k+1)]#[0.1,0.2,0.5,1.,2.]#[0.01,0.1,1.,10.,50.,80.,100.]
+    lam_range = [2**(i-k) for i in range(2*k+1)]
     eta = 1.
-    L_range = [1.]#lam_range#[0.5,1.,2.]#[0.01,0.1,1.,10.,100.]
+    L_range = lam_range
     eps = 1e-4
     subsampling = 1
     mu0 = 1.
@@ -138,7 +163,7 @@ if __name__ == '__main__':
     problem.score()
     
     problem.benchmark(method='KernelRidge()')
-    '''
+    
     mse = []
     msf = []
     mse_bm = []
@@ -163,3 +188,6 @@ if __name__ == '__main__':
     print mse_bm.mean(), '+', mse_bm.std()
     print msf.mean(), '+', msf.std()
     print msf_bm.mean(), '+', msf_bm.std()
+	'''
+    problem.my_cv()
+    print problem.cv_score
