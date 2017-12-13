@@ -19,7 +19,7 @@ from kernel import make_base_kernels
 def get_base_kernels(features, subsampling=1):
     return make_base_kernels(features, subsampling=subsampling)
 
-def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, eps=1e-3, subsampling=1):
+def find_kernel(x, y, degree=1, lam=10., eta=0.5, L=1., mu0=None, mu_init=None, eps=1e-3, subsampling=1):
     (m, p) = x.shape
     m = m / subsampling + int(subsampling > 1)
     mu = mu_init
@@ -30,7 +30,7 @@ def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, 
     al = np.zeros(m)
     it = 0
     it_max = 100
-    while np.linalg.norm(al - al_prime) / np.linalg.norm(al_prime) > eps and it < it_max:
+    while np.linalg.norm(al - al_prime) > eps and it < it_max:
         al = al_prime.copy()
         v = derivatives(base_kernels, p, al)
         v /= np.linalg.norm(v)		

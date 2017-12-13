@@ -19,7 +19,6 @@ def make_base_kernels(features, subsampling=1):
 def make_test_kernels(xTrain, xTest, subsampling=1):
     kernels_array = []
     for k in range(xTrain.shape[1]):
-        tmp = build_test_kernel(xTrain[:, k], xTest[:, k])
-        #tmp = build_test_kernel(xTrain[::subsampling, k], xTest[::subsampling, k])
+        tmp = build_test_kernel(xTrain[::subsampling, k], xTest[::subsampling, k])
         kernels_array.append(tmp)
     return np.array(kernels_array)

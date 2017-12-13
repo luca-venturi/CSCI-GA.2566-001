@@ -9,6 +9,7 @@ from sklearn.model_selection import RepeatedKFold
 from sklearn.metrics import mean_squared_error
 import pgd_l2
 import pgd_new
+import pgd_new_gd
 import pgd
 import kernel
 import preprocess
@@ -64,11 +65,26 @@ class Problem():
         self.yPredictC = 2 * (self.yPredictR >= 0.) - 1
     
     def score(self):
+        self.mu, gTrain = self.get_kernel(self.xTrain, self.yTrain, lam=self.lam_range, L=self.L_range)
+        self.classifier = self.get_classifier(c=self.lam_range)
+        self.model = self.classifier.fit(gTrain, self.yTrain)
         self.predict()
         self.mse = np.sqrt(mean_squared_error(self.yTest,self.yPredictR))
         self.msf = np.mean(self.yTest != self.yPredictC)
-        print 'mse -> ', problem.mse
-        print 'msf -> ', problem.msf
+        
+    def score_u(self):
+        mu = np.ones(self.n_features) / np.float(self.n_features)
+        tmp = self.make_test_kernels(self.xTrain, self.xTrain, subsampling=self.subsampling) 
+        gTrain = self.sum_weight_kernels(tmp, mu) ** self.degree
+        tmp = self.make_test_kernels(self.xTest, self.xTest, subsampling=self.subsampling) 
+        gTest = self.sum_weight_kernels(tmp, mu) ** self.degree
+        classifier = self.get_classifier(c=self.lam_range)
+        model = classifier.fit(gTrain, self.yTrain)
+        yPredictR = model.predict(self.gTest)
+        yPredictC = 2 * (yPredictR >= 0.) - 1
+        self.mse_u = np.sqrt(mean_squared_error(self.yTest,yPredictR))
+        self.msf_u = np.mean(self.yTest != yPredictC)
+
     '''
     def statistical_cv(self):
         for lam in self.lam_range:
@@ -90,36 +106,25 @@ class Problem():
             cv = RepeatedKFold(n_splits=2, n_repeats=30)).mean()
         print 'stat mse -> ', problem.mse_stat
     '''    
-    def benchmark(self, method=None):
-        print 'benchmark model: ' + method
-        classifier = eval(method)
-        print 'cv -> ', - cross_val_score(classifier, self.xTrain, self.yTrain, cv=10, scoring='neg_mean_squared_error').mean()
+    def benchmark(self, method='KernelRidge()'):
+        classifier = KernelRidge(alpha=self.lam_range)
         classifier.fit(self.xTrain,self.yTrain)
         tmp = classifier.predict(self.xTest)
         self.mse_bm = np.sqrt(mean_squared_error(self.yTest,tmp))
-        print 'test mse -> ', self.mse_bm
         self.msf_bm = np.mean(self.yTest != (2 * (tmp >= 0.) - 1))
-        print 'test msf -> ', self.msf_bm
-        
-    def uniform(self, method=None):
-        tmp = self.make_test_kernels(self.x, self.x, subsampling=self.subsampling)
-        mu = np.ones(self.n_features) / self.n_features 
-        g = self.sum_weight_kernels(tmp, mu) ** self.degree
-        yPredictR = KernelRidge.predict(self.gTest)
-        yPredictC = 2 * (self.yPredictR >= 0.) - 1
         
 if __name__ == '__main__':
     
     data_sets = {1:'ionosphere', 2:'sonar', 3:'breast-cancer', 4:'diabetes', 5:'fourclass', 6:'german',
         7:'heart', 8:'kin8nm', 9:'madelon', 10:'supernova'}
     
-    data = 1
-    alg = 'pgd' 
+    data = 2
+    alg = 'pgd_new' 
     degree = 1
     k = 3
-    lam_range = [0.01]#[2**(i-k) for i in range(2*k+1)]#[0.1,0.2,0.5,1.,2.]#[0.01,0.1,1.,10.,50.,80.,100.]
+    lam_range = 4.#[2**(i-k) for i in range(2*k+1)]#[0.1,0.2,0.5,1.,2.]#[0.01,0.1,1.,10.,50.,80.,100.]
     eta = 1.
-    L_range = [1.]#lam_range#[0.5,1.,2.]#[0.01,0.1,1.,10.,100.]
+    L_range = .5#lam_range#[0.5,1.,2.]#[0.01,0.1,1.,10.,100.]
     eps = 1e-4
     subsampling = 1
     mu0 = 1.
@@ -143,23 +148,31 @@ if __name__ == '__main__':
     msf = []
     mse_bm = []
     msf_bm = []
+    mse_u = []
+    msf_u = []
     for i in range(30):
-        preprocess._preprocess(dataset, 10000*i)
-        problem = Problem(dataset=dataset, alg=alg, method=method, degree=degree, 
+        preprocess._preprocess(dataset, 1000*i)
+        problem = Problem(dataset=dataset, alg=alg, degree=degree, 
             lam_range=lam_range, eta=eta, L_range=L_range, mu0=mu0, mu_init=mu_init, eps=eps, subsampling=subsampling)
-        problem.cv()
         problem.score()
         mse.append(problem.mse)
-        msf.append(problem.msf)    
+        msf.append(problem.msf)
+        problem.score_u()
+        mse_u.append(problem.mse_u)
+        msf_u.append(problem.msf_u)    
         problem.benchmark()
         mse_bm.append(problem.mse_bm)
         msf_bm.append(problem.msf_bm)
     mse = np.array(mse)
     msf = np.array(msf)    
+    mse_u = np.array(mse_u)
+    msf_u = np.array(msf_u)
     mse_bm = np.array(mse_bm)
-    msf_bm = np.array(msf_bm)    
+    msf_bm = np.array(msf_bm)
             
-    print mse.mean(), '+', mse.std()
-    print mse_bm.mean(), '+', mse_bm.std()
-    print msf.mean(), '+', msf.std()
-    print msf_bm.mean(), '+', msf_bm.std()
+    print 'MSE: ', mse.mean(), '+', mse.std()
+    print 'MSE BM: ', mse_bm.mean(), '+', mse_bm.std()
+    print 'MSE U: ', mse_u.mean(), '+', mse_u.std()
+    print 'MSF: ', msf.mean(), '+', msf.std()
+    print 'MSF BM: ', msf_bm.mean(), '+', msf_bm.std()
+    print 'MSF U: ', msf_u.mean(), '+', msf_u.std()

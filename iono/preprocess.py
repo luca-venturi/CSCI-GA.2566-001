@@ -5,7 +5,7 @@ from sklearn.utils import shuffle
 import re
 
 # ok
-def _preprocess(data_set, random_state=random_state, frac=0.5):
+def _preprocess(data_set, random_state=1024, frac=0.5):
     with open('data/uci/' + data_set + '.data', 'r') as _file:
         data_array = []
         for line in _file:
@@ -50,9 +50,7 @@ def preprocessor_libsvm_data(filename, format_label_func=lambda _: _):
             pattern = re.compile(r"[-+]?\d+:([-+]?\d*\.\d+|[-+]?\d+)")
             feature = []
             for phrase in container:
-                # print(phrase)
                 target = re.findall(pattern, phrase)
-                # print(target)
                 feature.append(float(target[0]))
             features.append(feature)
             labels.append(label)
